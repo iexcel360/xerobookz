@@ -1,0 +1,9 @@
+{
+  "name": "xerobookz",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:admin": "cd xerobookz-frontend/ui-shared && npm ci && npm run build && cd ../api-clients && npm ci && npm run build && cd ../admin-web && npm ci && npm run build"
+  }
+}
+
