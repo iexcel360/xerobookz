@@ -2,7 +2,6 @@
   "version": 2,
   "buildCommand": "cd ../ui-shared && npm ci && npm run build && cd ../api-clients && npm ci && npm run build && cd ../admin-web && npm ci && npm run build",
   "installCommand": "cd ../ui-shared && npm ci && cd ../api-clients && npm ci && cd ../admin-web && npm ci",
-  "framework": "nextjs",
-  "outputDirectory": ".next"
+  "framework": "nextjs"
 }
 
