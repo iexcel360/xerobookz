@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: xerobookz
+  labels:
+    app: auth-service
+    service: auth
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: ghcr.io/xerobookz/auth-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8001
+          name: http
+        env:
+        - name: SERVICE_NAME
+          value: "auth-service"
+        - name: POSTGRES_URI
+          valueFrom:
+            secretKeyRef:
+              name: xerobookz-secrets
+              key: POSTGRES_URI
+        - name: REDIS_URI
+          valueFrom:
+            secretKeyRef:
+              name: xerobookz-secrets
+              key: REDIS_URI
+        - name: RABBITMQ_URI
+          valueFrom:
+            secretKeyRef:
+              name: xerobookz-secrets
+              key: RABBITMQ_URI
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: xerobookz-secrets
+              key: JWT_SECRET
+        - name: TENANT_HEADER
+          valueFrom:
+            configMapKeyRef:
+              name: xerobookz-config
+              key: TENANT_HEADER
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+

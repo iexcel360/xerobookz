@@ -1,0 +1,91 @@
+global:
+  namespace: xerobookz
+  imageRegistry: ghcr.io/xerobookz
+  imagePullPolicy: Always
+
+# Service configuration
+service:
+  name: auth-service
+  port: 8001
+  type: ClusterIP
+
+# Deployment configuration
+deployment:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+# Container configuration
+container:
+  image: auth-service
+  tag: latest
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Health checks
+healthCheck:
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+# Environment variables
+env:
+  SERVICE_NAME: "auth-service"
+  TENANT_HEADER: "X-Tenant-ID"
+  LOG_LEVEL: "INFO"
+
+# Secrets (references to Kubernetes secrets)
+secrets:
+  POSTGRES_URI: "xerobookz-secrets"
+  REDIS_URI: "xerobookz-secrets"
+  RABBITMQ_URI: "xerobookz-secrets"
+  JWT_SECRET: "xerobookz-secrets"
+
+# Ingress
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.xerobookz.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-gateway-tls
+      hosts:
+        - api.xerobookz.com
+
+# ServiceMonitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+

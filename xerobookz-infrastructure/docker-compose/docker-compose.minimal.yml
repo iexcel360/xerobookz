@@ -1,0 +1,78 @@
+# Minimal Docker Compose - Start with databases only
+# Use this to test database connectivity first
+
+services:
+  # Databases
+  postgres:
+    image: postgres:16
+    container_name: xerobookz-postgres
+    environment:
+      POSTGRES_USER: xerobookz
+      POSTGRES_PASSWORD: xerobookz_dev
+      POSTGRES_DB: xerobookz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xerobookz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: xerobookz-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: xerobookz
+      MONGO_INITDB_ROOT_PASSWORD: xerobookz_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: xerobookz-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: xerobookz-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: xerobookz
+      RABBITMQ_DEFAULT_PASS: xerobookz_dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  default:
+    name: xerobookz-network
+

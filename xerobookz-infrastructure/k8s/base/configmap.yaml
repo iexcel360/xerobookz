@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xerobookz-config
+  namespace: xerobookz
+data:
+  TENANT_HEADER: "X-Tenant-ID"
+  LOG_LEVEL: "INFO"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+

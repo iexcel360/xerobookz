@@ -1,0 +1,618 @@
+services:
+  # Databases
+  postgres:
+    image: postgres:16
+    container_name: xerobookz-postgres
+    environment:
+      POSTGRES_USER: xerobookz
+      POSTGRES_PASSWORD: xerobookz_dev
+      POSTGRES_DB: xerobookz
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xerobookz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: xerobookz-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: xerobookz
+      MONGO_INITDB_ROOT_PASSWORD: xerobookz_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: xerobookz-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: xerobookz-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: xerobookz
+      RABBITMQ_DEFAULT_PASS: xerobookz_dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ../../saas-backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: xerobookz-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      JWT_SECRET: dev-secret-key-change-in-production
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - xerobookz-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ../../saas-backend/auth-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-auth-service
+    environment:
+      SERVICE_NAME: auth-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      JWT_SECRET: dev-secret-key-change-in-production
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - xerobookz-network
+
+  # User Service
+  user-service:
+    build:
+      context: ../../saas-backend/user-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-user-service
+    environment:
+      SERVICE_NAME: user-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Organization Service
+  organization-service:
+    build:
+      context: ../../saas-backend/organization-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-organization-service
+    environment:
+      SERVICE_NAME: organization-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Employee Service
+  employee-service:
+    build:
+      context: ../../saas-backend/employee-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-employee-service
+    environment:
+      SERVICE_NAME: employee-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Document Service
+  document-service:
+    build:
+      context: ../../saas-backend/document-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-document-service
+    environment:
+      SERVICE_NAME: document-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      MONGO_URI: mongodb://xerobookz:xerobookz_dev@mongodb:27017/xerobookz?authSource=admin
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # I-9 Service
+  i9-service:
+    build:
+      context: ../../saas-backend/i9-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-i9-service
+    environment:
+      SERVICE_NAME: i9-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # E-Verify Service
+  e-verify-service:
+    build:
+      context: ../../saas-backend/e-verify-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-e-verify-service
+    environment:
+      SERVICE_NAME: e-verify-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # I-9 Audit Service
+  i9-audit-service:
+    build:
+      context: ../../saas-backend/i9-audit-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-i9-audit-service
+    environment:
+      SERVICE_NAME: i9-audit-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # PAF Service
+  paf-service:
+    build:
+      context: ../../saas-backend/paf-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-paf-service
+    environment:
+      SERVICE_NAME: paf-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      MONGO_URI: mongodb://xerobookz:xerobookz_dev@mongodb:27017/xerobookz?authSource=admin
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # SOC Predictor Service
+  soc-predictor-service:
+    build:
+      context: ../../saas-backend/soc-predictor-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-soc-predictor-service
+    environment:
+      SERVICE_NAME: soc-predictor-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Immigration Service
+  immigration-service:
+    build:
+      context: ../../saas-backend/immigration-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-immigration-service
+    environment:
+      SERVICE_NAME: immigration-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # LCA Service
+  lca-service:
+    build:
+      context: ../../saas-backend/lca-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-lca-service
+    environment:
+      SERVICE_NAME: lca-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      MONGO_URI: mongodb://xerobookz:xerobookz_dev@mongodb:27017/xerobookz?authSource=admin
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Timesheet Service
+  timesheet-service:
+    build:
+      context: ../../saas-backend/timesheet-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-timesheet-service
+    environment:
+      SERVICE_NAME: timesheet-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Leave Service
+  leave-service:
+    build:
+      context: ../../saas-backend/leave-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-leave-service
+    environment:
+      SERVICE_NAME: leave-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ../../saas-backend/notification-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-notification-service
+    environment:
+      SERVICE_NAME: notification-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Audit Service
+  audit-service:
+    build:
+      context: ../../saas-backend/audit-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-audit-service
+    environment:
+      SERVICE_NAME: audit-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Safety Service
+  safety-service:
+    build:
+      context: ../../saas-backend/safety-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-safety-service
+    environment:
+      SERVICE_NAME: safety-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Onboarding Service
+  onboarding-service:
+    build:
+      context: ../../saas-backend/onboarding-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-onboarding-service
+    environment:
+      SERVICE_NAME: onboarding-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Workflow Service
+  workflow-service:
+    build:
+      context: ../../saas-backend/workflow-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-workflow-service
+    environment:
+      SERVICE_NAME: workflow-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Invoice Service
+  invoice-service:
+    build:
+      context: ../../saas-backend/invoice-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-invoice-service
+    environment:
+      SERVICE_NAME: invoice-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ../../saas-backend/payment-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-payment-service
+    environment:
+      SERVICE_NAME: payment-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Finance Dashboard Service
+  finance-dashboard-service:
+    build:
+      context: ../../saas-backend/finance-dashboard-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-finance-dashboard-service
+    environment:
+      SERVICE_NAME: finance-dashboard-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # Marketing Service
+  marketing-service:
+    build:
+      context: ../../saas-backend/marketing-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-marketing-service
+    environment:
+      SERVICE_NAME: marketing-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # ESS Service
+  ess-service:
+    build:
+      context: ../../saas-backend/ess-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-ess-service
+    environment:
+      SERVICE_NAME: ess-service
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - xerobookz-network
+
+  # AI Service
+  ai-service:
+    build:
+      context: ../../saas-backend/ai-service
+      dockerfile: Dockerfile
+    container_name: xerobookz-ai-service
+    ports:
+      - "8025:8025"
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: ai-service
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-3-haiku-20240307}
+      POSTGRES_URI: postgresql://xerobookz:xerobookz_dev@postgres:5432/xerobookz
+      REDIS_URI: redis://redis:6379/0
+      RABBITMQ_URI: amqp://xerobookz:xerobookz_dev@rabbitmq:5672/
+      TENANT_HEADER: X-Tenant-ID
+      USE_OCR: ${USE_OCR:-True}
+      OCR_PROVIDER: ${OCR_PROVIDER:-openai}
+      AI_RATE_LIMIT: ${AI_RATE_LIMIT:-100}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - xerobookz-network
+
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v2.10
+    container_name: xerobookz-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - api-gateway
+    networks:
+      - xerobookz-network
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  xerobookz-network:
+    driver: bridge
+

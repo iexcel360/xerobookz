@@ -1,0 +1,73 @@
+name: Frontend Web Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'xerobookz-frontend/**'
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App to deploy'
+        required: true
+        type: choice
+        options:
+          - admin-web
+          - employer-web
+          - ess-web
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: xerobookz-frontend/${{ github.event.inputs.app || 'admin-web' }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: xerobookz-frontend/${{ github.event.inputs.app || 'admin-web' }}
+        run: npm ci
+
+      - name: Build shared packages
+        run: |
+          cd xerobookz-frontend/ui-shared && npm install && npm run build
+          cd ../api-clients && npm install && npm run build
+
+      - name: Lint
+        working-directory: xerobookz-frontend/${{ github.event.inputs.app || 'admin-web' }}
+        run: npm run lint || true
+
+      - name: Build Next.js app
+        working-directory: xerobookz-frontend/${{ github.event.inputs.app || 'admin-web' }}
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.API_URL }}
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3
+        working-directory: xerobookz-frontend/${{ github.event.inputs.app || 'admin-web' }}
+        run: |
+          aws s3 sync .next/static s3://xerobookz-${{ github.event.inputs.app || 'admin-web' }}/_next/static --delete
+          aws s3 sync public s3://xerobookz-${{ github.event.inputs.app || 'admin-web' }}/public --delete
+          aws s3 cp .next/standalone s3://xerobookz-${{ github.event.inputs.app || 'admin-web' }}/ --recursive
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+

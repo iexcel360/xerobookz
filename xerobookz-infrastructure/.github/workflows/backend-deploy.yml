@@ -1,0 +1,87 @@
+name: Backend Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'saas-backend/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name xerobookz-eks --region us-east-1
+
+      - name: Deploy to Kubernetes
+        run: |
+          SERVICES=(
+            "auth-service:8001"
+            "user-service:8002"
+            "organization-service:8003"
+            "employee-service:8004"
+            "document-service:8005"
+            "i9-service:8006"
+            "e-verify-service:8007"
+            "i9-audit-service:8008"
+            "paf-service:8009"
+            "soc-predictor-service:8010"
+            "immigration-service:8011"
+            "lca-service:8012"
+            "timesheet-service:8013"
+            "leave-service:8014"
+            "notification-service:8015"
+            "audit-service:8016"
+            "safety-service:8017"
+            "onboarding-service:8018"
+            "workflow-service:8019"
+            "invoice-service:8020"
+            "payment-service:8021"
+            "finance-dashboard-service:8022"
+            "marketing-service:8023"
+            "ess-service:8024"
+            "api-gateway:8000"
+          )
+
+          for service_port in "${SERVICES[@]}"; do
+            IFS=':' read -r service port <<< "$service_port"
+            helm upgrade --install $service ./helm/xerobookz-chart \
+              --namespace xerobookz-${{ github.event.inputs.environment || 'staging' }} \
+              --set service.name=$service \
+              --set container.image=$service \
+              --set service.port=$port \
+              --set global.imageRegistry=${{ env.REGISTRY }}/xerobookz \
+              --wait
+          done
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n xerobookz-${{ github.event.inputs.environment || 'staging' }}
+          kubectl get services -n xerobookz-${{ github.event.inputs.environment || 'staging' }}
+
