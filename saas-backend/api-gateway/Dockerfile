@@ -2,13 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY api-gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ../shared-libs /app/shared-libs
+COPY shared-libs /app/shared-libs
 RUN pip install -e /app/shared-libs
 
-COPY app /app/app
+COPY api-gateway/app /app/app
 
 EXPOSE 8000
 

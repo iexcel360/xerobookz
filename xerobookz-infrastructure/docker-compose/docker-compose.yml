@@ -66,8 +66,8 @@ services:
   # API Gateway
   api-gateway:
     build:
-      context: ../../saas-backend/api-gateway
-      dockerfile: Dockerfile
+      context: ../../saas-backend
+      dockerfile: api-gateway/Dockerfile
     container_name: xerobookz-api-gateway
     ports:
       - "8000:8000"
