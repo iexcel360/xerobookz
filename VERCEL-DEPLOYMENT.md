@@ -47,8 +47,80 @@ The `vercel.json` file has been created at the root. However, you still need to:
 
 Make sure to add these environment variables in Vercel Dashboard → Settings → Environment Variables:
 
+### Required Environment Variables
+
+#### 1. `NEXT_PUBLIC_API_URL` (Required)
+- **Description**: The base URL for the API Gateway/Backend services
+- **Local Development**: `http://localhost:8000`
+- **Production Example**: `https://api.xerobookz.com` or `https://your-api-gateway-url.com`
+- **Where to add**: Vercel Dashboard → Project Settings → Environment Variables
+- **For all environments**: Production, Preview, Development
+
+**Example:**
 ```
-NEXT_PUBLIC_API_URL=https://your-api-gateway-url.com
+NEXT_PUBLIC_API_URL=https://api.xerobookz.com
+```
+
+### Optional Environment Variables
+
+#### 2. `NEXT_PUBLIC_APP_ENV` (Optional)
+- **Description**: Application environment identifier
+- **Values**: `development`, `staging`, `production`
+- **Default**: `production` (if not set)
+
+**Example:**
+```
+NEXT_PUBLIC_APP_ENV=production
+```
+
+#### 3. `NEXT_PUBLIC_APP_NAME` (Optional)
+- **Description**: Application name for branding
+- **Default**: `XeroBookz`
+
+**Example:**
+```
+NEXT_PUBLIC_APP_NAME=XeroBookz
+```
+
+### How to Add Environment Variables in Vercel
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** → **Environment Variables**
+3. Click **Add New**
+4. Enter the variable name (e.g., `NEXT_PUBLIC_API_URL`)
+5. Enter the variable value (e.g., `https://api.xerobookz.com`)
+6. Select which environments to apply to:
+   - ✅ Production
+   - ✅ Preview
+   - ✅ Development
+7. Click **Save**
+
+### Important Notes
+
+- **`NEXT_PUBLIC_` prefix**: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser. Only use this prefix for variables that are safe to expose publicly.
+- **API URL**: Make sure your API Gateway is accessible from the internet and has CORS configured to allow requests from your Vercel domain.
+- **After adding variables**: You need to **redeploy** your application for the changes to take effect.
+
+### Environment-Specific Configuration
+
+You can set different values for different environments:
+
+- **Production**: Use your production API URL
+- **Preview**: Use your staging API URL (if you have one)
+- **Development**: Use `http://localhost:8000` (for local testing only)
+
+### Example Configuration
+
+For a production deployment:
+```
+NEXT_PUBLIC_API_URL=https://api.xerobookz.com
+NEXT_PUBLIC_APP_ENV=production
+```
+
+For a staging/preview deployment:
+```
+NEXT_PUBLIC_API_URL=https://staging-api.xerobookz.com
+NEXT_PUBLIC_APP_ENV=staging
 ```
 
 ## Build Issues
