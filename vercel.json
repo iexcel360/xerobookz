@@ -3,7 +3,6 @@
   "buildCommand": "cd xerobookz-frontend/ui-shared && npm ci && npm run build && cd ../api-clients && npm ci && npm run build && cd ../admin-web && npm ci && npm run build",
   "installCommand": "echo 'Dependencies installed during build'",
   "framework": "nextjs",
-  "rootDirectory": "xerobookz-frontend/admin-web",
-  "outputDirectory": ".next"
+  "outputDirectory": "xerobookz-frontend/admin-web/.next"
 }
 
