@@ -18,6 +18,8 @@ export default function Home() {
   const router = useRouter();
   const [isSignInDropdownOpen, setIsSignInDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const [revealedElements, setRevealedElements] = useState<Set<string>>(new Set());
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,6 +32,42 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Scroll position tracking for parallax effects
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Intersection Observer for scroll reveal animations
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute("data-reveal-id");
+          if (id) {
+            setRevealedElements((prev) => new Set([...prev, id]));
+          }
+        }
+      });
+    }, observerOptions);
+
+    const elements = document.querySelectorAll("[data-reveal-id]");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      elements.forEach((el) => observer.unobserve(el));
     };
   }, []);
 
@@ -285,7 +323,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Minimal Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-grey-200">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrollY > 50 
+          ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-grey-200' 
+          : 'bg-white/80 backdrop-blur-md border-b border-grey-200'
+      }`}>
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/">
@@ -364,10 +406,30 @@ export default function Home() {
 
       {/* Hero Section with Logo and Company Name */}
       <section className="pt-32 pb-32 px-6 lg:px-8 bg-gradient-to-br from-primary-50 via-white to-accent-50 relative overflow-hidden">
-        {/* Decorative background elements */}
+        {/* Animated decorative background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl"></div>
+          <div 
+            className="absolute top-20 left-10 w-72 h-72 bg-primary-200/20 rounded-full blur-3xl animate-float"
+            style={{ 
+              transform: `translateY(${scrollY * 0.3}px)`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          ></div>
+          <div 
+            className="absolute bottom-20 right-10 w-96 h-96 bg-accent-200/20 rounded-full blur-3xl animate-float"
+            style={{ 
+              transform: `translateY(${scrollY * -0.2}px)`,
+              transition: 'transform 0.1s ease-out',
+              animationDelay: '1s'
+            }}
+          ></div>
+          <div 
+            className="absolute top-1/2 left-1/2 w-64 h-64 bg-primary-100/10 rounded-full blur-3xl animate-pulse-slow"
+            style={{ 
+              transform: `translate(${-50 + scrollY * 0.1}%, ${-50 + scrollY * 0.15}%)`,
+              transition: 'transform 0.1s ease-out'
+            }}
+          ></div>
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -379,12 +441,12 @@ export default function Home() {
             </div>
             
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6 animate-fade-in">
-              <Sparkles size={16} />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6 animate-fade-in hover-lift">
+              <Sparkles size={16} className="animate-pulse-slow" />
               <span>AI-Powered Automation</span>
             </div>
             
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-secondary-900 mb-6 leading-tight animate-fade-in-up">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-secondary-900 mb-6 leading-tight animate-fade-in-up bg-gradient-to-r from-primary-600 via-secondary-700 to-accent-600 bg-clip-text text-transparent animate-gradient">
               XeroBookz
             </h1>
             <p className="text-3xl md:text-4xl font-semibold text-secondary-700 mb-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
@@ -396,22 +458,23 @@ export default function Home() {
             
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-4xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-1">26+</div>
-                <div className="text-sm text-grey-600">Microservices</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-1">AI</div>
-                <div className="text-sm text-grey-600">Powered</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-1">100%</div>
-                <div className="text-sm text-grey-600">Compliant</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-1">24/7</div>
-                <div className="text-sm text-grey-600">Support</div>
-              </div>
+              {[
+                { value: "26+", label: "Microservices" },
+                { value: "AI", label: "Powered" },
+                { value: "100%", label: "Compliant" },
+                { value: "24/7", label: "Support" },
+              ].map((stat, index) => (
+                <div 
+                  key={index}
+                  className="text-center p-4 rounded-xl bg-white/50 backdrop-blur-sm border border-grey-200/50 hover-lift hover-glow transition-all duration-300"
+                  data-reveal-id={`stat-${index}`}
+                >
+                  <div className={`text-3xl md:text-4xl font-bold text-primary-600 mb-1 transition-all duration-300 hover:scale-110 inline-block ${revealedElements.has(`stat-${index}`) ? 'scroll-reveal-scale revealed' : 'scroll-reveal-scale'}`}>
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-grey-600">{stat.label}</div>
+                </div>
+              ))}
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
@@ -421,10 +484,13 @@ export default function Home() {
                 onClick={() => {
                   document.getElementById("portals")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="group"
+                className="group hover-lift hover-glow relative overflow-hidden"
               >
-                Get Started
-                <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 flex items-center">
+                  Get Started
+                  <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 animate-shimmer opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </Button>
               <Button
                 variant="outline"
@@ -432,7 +498,7 @@ export default function Home() {
                 onClick={() => {
                   document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="group"
+                className="group hover-lift transition-all duration-300 hover:border-primary-500 hover:bg-primary-50"
               >
                 Explore Features
                 <ArrowRight size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -443,7 +509,7 @@ export default function Home() {
       </section>
 
       {/* AI Features Highlight Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-700 py-20 px-6 lg:px-8 text-white relative overflow-hidden">
+      <section className="bg-gradient-to-r from-primary-600 to-primary-700 py-20 px-6 lg:px-8 text-white relative overflow-hidden animate-gradient">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -464,29 +530,27 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card variant="glass" className="bg-white/10 backdrop-blur-md border-white/20 text-white p-6">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                <FileCheck size={24} className="text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Document Processing</h3>
-              <p className="text-white/80 text-sm">Auto-extract data from I-9 forms, passports, visas, and receipts with AI-powered OCR.</p>
-            </Card>
-            
-            <Card variant="glass" className="bg-white/10 backdrop-blur-md border-white/20 text-white p-6">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                <Zap size={24} className="text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Form Auto-Fill</h3>
-              <p className="text-white/80 text-sm">Automatically fill onboarding forms, timesheets, and expense claims using AI intelligence.</p>
-            </Card>
-            
-            <Card variant="glass" className="bg-white/10 backdrop-blur-md border-white/20 text-white p-6">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                <Target size={24} className="text-white" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Smart Suggestions</h3>
-              <p className="text-white/80 text-sm">Get AI-powered SOC code predictions, autocomplete, and personalized recommendations.</p>
-            </Card>
+            {[
+              { icon: FileCheck, title: "Document Processing", desc: "Auto-extract data from I-9 forms, passports, visas, and receipts with AI-powered OCR." },
+              { icon: Zap, title: "Form Auto-Fill", desc: "Automatically fill onboarding forms, timesheets, and expense claims using AI intelligence." },
+              { icon: Target, title: "Smart Suggestions", desc: "Get AI-powered SOC code predictions, autocomplete, and personalized recommendations." },
+            ].map((feature, index) => {
+              const IconComponent = feature.icon;
+              return (
+                <Card 
+                  key={index}
+                  variant="glass" 
+                  className="bg-white/10 backdrop-blur-md border-white/20 text-white p-6 hover-lift transition-all duration-300 hover:bg-white/20 hover:scale-105"
+                  data-reveal-id={`ai-feature-${index}`}
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4 transition-all duration-300 hover:scale-110 hover:rotate-6 ${revealedElements.has(`ai-feature-${index}`) ? 'scroll-reveal-scale revealed' : 'scroll-reveal-scale'}`}>
+                    <IconComponent size={24} className="text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-white/80 text-sm">{feature.desc}</p>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -515,27 +579,28 @@ export default function Home() {
                 key={portal.name}
                 variant="floating"
                 hover
-                className="text-center p-8 cursor-pointer group"
+                className="text-center p-8 cursor-pointer group hover-lift transition-all duration-300 hover:scale-105"
                 onClick={() => handlePortalClick(portal)}
+                data-reveal-id={`portal-${index}`}
               >
                 <div className="flex justify-center mb-6">
-                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
                     portal.color === "primary" 
-                      ? "bg-primary-50 group-hover:bg-primary-100" 
+                      ? "bg-primary-50 group-hover:bg-primary-100 group-hover:shadow-lg" 
                       : portal.color === "secondary"
-                      ? "bg-secondary-50 group-hover:bg-secondary-100"
-                      : "bg-accent-50 group-hover:bg-accent-100"
+                      ? "bg-secondary-50 group-hover:bg-secondary-100 group-hover:shadow-lg"
+                      : "bg-accent-50 group-hover:bg-accent-100 group-hover:shadow-lg"
                   }`}>
                     <IconComponent
                       size={40}
                       strokeWidth={2}
-                      className={
+                      className={`transition-all duration-300 group-hover:scale-110 ${
                         portal.color === "primary" 
                           ? "text-primary-600" 
                           : portal.color === "secondary"
                           ? "text-secondary-600"
                           : "text-accent-600"
-                      }
+                      }`}
                     />
                   </div>
                 </div>
@@ -569,7 +634,7 @@ export default function Home() {
       {/* Core Compliance Features Section */}
       <section className="bg-gradient-to-b from-white to-grey-50 py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <div className={`text-center mb-16 scroll-reveal ${revealedElements.has('core-features-header') ? 'revealed' : ''}`} data-reveal-id="core-features-header">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-sm font-medium mb-6">
               <Award size={16} />
               <span>Core Features</span>
@@ -588,23 +653,24 @@ export default function Home() {
                 key={index}
                 variant="floating"
                 hover
-                className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.02]"
+                className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.05] hover-lift"
                 onClick={() => handleFeatureClick(feature.title)}
+                data-reveal-id={`core-feature-${index}`}
               >
                 <div className="flex flex-col h-full">
-                  <div className="w-16 h-16 rounded-2xl bg-primary-50 group-hover:bg-primary-100 group-hover:shadow-lg flex items-center justify-center mb-5 transition-all duration-200">
+                  <div className="w-16 h-16 rounded-2xl bg-primary-50 group-hover:bg-primary-100 group-hover:shadow-lg flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
                     <Icon
                       name={feature.icon}
                       size={32}
                       variant="primary"
-                      className="text-primary-600"
+                      className="text-primary-600 transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
                   <h3 className="text-xl font-semibold text-secondary-800 mb-3 group-hover:text-primary-600 transition-colors">
                     {feature.title}
                   </h3>
                   <p className="text-grey-600 text-sm leading-relaxed flex-grow">{feature.description}</p>
-                  <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-2">
                     Learn more →
                   </div>
                 </div>
@@ -617,7 +683,7 @@ export default function Home() {
       {/* Enterprise Features Section */}
       <section id="features" className="bg-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-20">
+          <div className={`text-center mb-20 scroll-reveal ${revealedElements.has('enterprise-features-header') ? 'revealed' : ''}`} data-reveal-id="enterprise-features-header">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm font-medium mb-6">
               <Star size={16} />
               <span>Enterprise Grade</span>
@@ -671,14 +737,15 @@ export default function Home() {
                             key={`${singleCatIndex}-${itemIndex}`}
                             variant="floating"
                             hover
-                            className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.02]"
+                            className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.05] hover-lift"
                             onClick={() => handleFeatureClick(item.title)}
+                            data-reveal-id={`enterprise-feature-${singleCatIndex}-${itemIndex}`}
                           >
                             <div className="flex flex-col h-full">
                               <div className="mb-3">
                                 <p className="text-sm font-medium text-grey-500 mb-2">{singleCat.category}</p>
                               </div>
-                              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-200 ${
+                              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
                                 item.color === "primary" 
                                   ? "bg-primary-50 group-hover:bg-primary-100 group-hover:shadow-lg" 
                                   : "bg-accent-50 group-hover:bg-accent-100 group-hover:shadow-lg"
@@ -686,7 +753,7 @@ export default function Home() {
                                 <IconComponent
                                   size={32}
                                   strokeWidth={2}
-                                  className={item.color === "primary" ? "text-primary-600" : "text-accent-600"}
+                                  className={`transition-transform duration-300 group-hover:scale-110 ${item.color === "primary" ? "text-primary-600" : "text-accent-600"}`}
                                 />
                               </div>
                               <h4 className="text-xl font-semibold text-secondary-800 mb-3 group-hover:text-primary-600 transition-colors">
@@ -695,7 +762,7 @@ export default function Home() {
                               <p className="text-grey-600 text-sm leading-relaxed flex-grow">
                                 {item.description}
                               </p>
-                              <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-2">
                                 Learn more →
                               </div>
                             </div>
@@ -726,11 +793,12 @@ export default function Home() {
                         key={itemIndex}
                         variant="floating"
                         hover
-                        className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.02]"
+                        className="p-8 group cursor-pointer transition-all duration-300 hover:scale-[1.05] hover-lift"
                         onClick={() => handleFeatureClick(item.title)}
+                        data-reveal-id={`enterprise-${categoryIndex}-${itemIndex}`}
                       >
                         <div className="flex flex-col h-full">
-                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-200 ${
+                          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
                             item.color === "primary" 
                               ? "bg-primary-50 group-hover:bg-primary-100 group-hover:shadow-lg" 
                               : "bg-accent-50 group-hover:bg-accent-100 group-hover:shadow-lg"
@@ -738,7 +806,7 @@ export default function Home() {
                             <IconComponent
                               size={32}
                               strokeWidth={2}
-                              className={item.color === "primary" ? "text-primary-600" : "text-accent-600"}
+                              className={`transition-transform duration-300 group-hover:scale-110 ${item.color === "primary" ? "text-primary-600" : "text-accent-600"}`}
                             />
                           </div>
                           <h4 className="text-xl font-semibold text-secondary-800 mb-3 group-hover:text-primary-600 transition-colors">
@@ -747,7 +815,7 @@ export default function Home() {
                           <p className="text-grey-600 text-sm leading-relaxed flex-grow">
                             {item.description}
                           </p>
-                          <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="mt-4 flex items-center text-primary-600 text-sm font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-2">
                             Learn more →
                           </div>
                         </div>
@@ -902,13 +970,14 @@ export default function Home() {
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-6 lg:px-8 py-32 text-center bg-gradient-to-br from-primary-50 via-white to-accent-50 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 right-20 w-64 h-64 bg-primary-200/30 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent-200/30 rounded-full blur-3xl"></div>
+          <div className="absolute top-10 right-20 w-64 h-64 bg-primary-200/30 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-10 left-20 w-80 h-80 bg-accent-200/30 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }}></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-primary-100/20 rounded-full blur-3xl animate-pulse-slow" style={{ transform: 'translate(-50%, -50%)' }}></div>
         </div>
         
-        <div className="max-w-4xl mx-auto relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6">
-            <Rocket size={16} />
+        <div className={`max-w-4xl mx-auto relative z-10 scroll-reveal ${revealedElements.has('cta-section') ? 'revealed' : ''}`} data-reveal-id="cta-section">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-700 text-sm font-medium mb-6 animate-pulse-slow">
+            <Rocket size={16} className="animate-float" />
             <span>Get Started Today</span>
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-secondary-800 mb-6">
@@ -992,9 +1061,9 @@ export default function Home() {
               </p>
             </div>
             <div className="flex gap-6 text-sm text-grey-600">
-              <a href="#" className="hover:text-secondary-800 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-secondary-800 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-secondary-800 transition-colors">Contact</a>
+              <Link href="/privacy" className="hover:text-secondary-800 transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-secondary-800 transition-colors">Terms of Service</Link>
+              <Link href="/contact" className="hover:text-secondary-800 transition-colors">Contact</Link>
             </div>
           </div>
         </div>
