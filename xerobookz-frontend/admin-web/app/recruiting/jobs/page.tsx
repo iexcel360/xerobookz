@@ -34,8 +34,8 @@ export default function RecruitingJobsPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,13 +51,13 @@ export default function RecruitingJobsPage() {
             <Button variant="primary">Post Job</Button>
           </div>
           <Table
-            headers={["Title", "Status", "Applications", "Actions"]}
-            rows={jobs.map((job) => [
-              job.title,
-              <Badge key={job.id} variant={job.status === "published" ? "success" : "secondary"}>{job.status}</Badge>,
-              job.applications,
-              <Button key={job.id} variant="ghost" size="sm">View</Button>,
-            ])}
+            columns={[
+              { key: "title", label: "Title" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "published" ? "success" : "default"}>{value}</Badge> },
+              { key: "applications", label: "Applications" },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">View</Button> },
+            ]}
+            data={jobs}
           />
         </Card>
       </div>

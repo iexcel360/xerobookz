@@ -36,8 +36,8 @@ export default function RecruitingDashboardPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -80,7 +80,7 @@ export default function RecruitingDashboardPage() {
               <p className="text-sm text-grey-600 mb-1">Offers Extended</p>
               <p className="text-2xl font-bold text-secondary-700">{stats.offersExtended}</p>
             </div>
-            <IconBox icon="check-circle" size="md" variant="success" />
+            <IconBox icon="check-circle" size="md" variant="accent" />
           </div>
         </Card>
       </div>

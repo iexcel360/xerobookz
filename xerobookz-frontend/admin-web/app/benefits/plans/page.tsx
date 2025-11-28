@@ -34,8 +34,8 @@ export default function BenefitsPlansPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,14 +51,14 @@ export default function BenefitsPlansPage() {
             <Button variant="primary">Add Plan</Button>
           </div>
           <Table
-            headers={["Name", "Type", "Status", "Enrollments", "Actions"]}
-            rows={plans.map((plan) => [
-              plan.name,
-              plan.type,
-              <Badge key={plan.id} variant="success">{plan.status}</Badge>,
-              plan.enrollments,
-              <Button key={plan.id} variant="ghost" size="sm">Edit</Button>,
-            ])}
+            columns={[
+              { key: "name", label: "Name" },
+              { key: "type", label: "Type" },
+              { key: "status", label: "Status", render: (value) => <Badge variant="success">{value}</Badge> },
+              { key: "enrollments", label: "Enrollments" },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">Edit</Button> },
+            ]}
+            data={plans}
           />
         </Card>
       </div>

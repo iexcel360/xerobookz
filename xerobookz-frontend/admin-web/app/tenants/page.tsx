@@ -45,8 +45,8 @@ export default function TenantsPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -72,7 +72,6 @@ export default function TenantsPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         title="Create New Tenant"
-        variant="glass"
       >
         <div className="space-y-4">
           <Input label="Tenant Name" placeholder="Enter tenant name" />

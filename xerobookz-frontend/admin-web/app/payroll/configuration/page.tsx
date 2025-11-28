@@ -36,8 +36,8 @@ export default function PayrollConfigurationPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >

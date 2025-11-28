@@ -43,7 +43,7 @@ export default function MyDocumentsPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
+        user: user || undefined,
       }}
     >
       <PageHeader

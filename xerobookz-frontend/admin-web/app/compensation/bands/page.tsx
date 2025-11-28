@@ -34,8 +34,8 @@ export default function CompensationBandsPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,14 +51,14 @@ export default function CompensationBandsPage() {
             <Button variant="primary">Add Band</Button>
           </div>
           <Table
-            headers={["Name", "Min Salary", "Max Salary", "Currency", "Actions"]}
-            rows={bands.map((band) => [
-              band.name,
-              `$${band.min.toLocaleString()}`,
-              `$${band.max.toLocaleString()}`,
-              band.currency,
-              <Button key={band.id} variant="ghost" size="sm">Edit</Button>,
-            ])}
+            columns={[
+              { key: "name", label: "Name" },
+              { key: "min", label: "Min Salary", render: (value) => `$${value.toLocaleString()}` },
+              { key: "max", label: "Max Salary", render: (value) => `$${value.toLocaleString()}` },
+              { key: "currency", label: "Currency" },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">Edit</Button> },
+            ]}
+            data={bands}
           />
         </Card>
       </div>

@@ -34,8 +34,8 @@ export default function PerformanceCyclesPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,14 +51,14 @@ export default function PerformanceCyclesPage() {
             <Button variant="primary">Create Cycle</Button>
           </div>
           <Table
-            headers={["Name", "Start Date", "End Date", "Status", "Actions"]}
-            rows={cycles.map((cycle) => [
-              cycle.name,
-              cycle.startDate,
-              cycle.endDate,
-              <Badge key={cycle.id} variant={cycle.status === "active" ? "success" : "secondary"}>{cycle.status}</Badge>,
-              <Button key={cycle.id} variant="ghost" size="sm">Edit</Button>,
-            ])}
+            columns={[
+              { key: "name", label: "Name" },
+              { key: "startDate", label: "Start Date" },
+              { key: "endDate", label: "End Date" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "active" ? "success" : "default"}>{value}</Badge> },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">Edit</Button> },
+            ]}
+            data={cycles}
           />
         </Card>
       </div>

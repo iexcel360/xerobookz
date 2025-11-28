@@ -32,8 +32,8 @@ export default function MyExpensesPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -49,14 +49,14 @@ export default function MyExpensesPage() {
             <Button variant="primary">New Claim</Button>
           </div>
           <Table
-            headers={["Amount", "Category", "Date", "Status", "Actions"]}
-            rows={claims.map((claim) => [
-              claim.amount,
-              claim.category,
-              claim.date,
-              <Badge key={claim.id} variant={claim.status === "approved" ? "success" : "warning"}>{claim.status}</Badge>,
-              <Button key={claim.id} variant="ghost" size="sm">View</Button>,
-            ])}
+            columns={[
+              { key: "amount", label: "Amount" },
+              { key: "category", label: "Category" },
+              { key: "date", label: "Date" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "approved" ? "success" : "warning"}>{value}</Badge> },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">View</Button> },
+            ]}
+            data={claims}
           />
         </Card>
       </div>

@@ -34,8 +34,8 @@ export default function SurveyTemplatesPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,13 +51,13 @@ export default function SurveyTemplatesPage() {
             <Button variant="primary">Create Survey</Button>
           </div>
           <Table
-            headers={["Title", "Status", "Responses", "Actions"]}
-            rows={surveys.map((survey) => [
-              survey.title,
-              <Badge key={survey.id} variant={survey.status === "active" ? "success" : "secondary"}>{survey.status}</Badge>,
-              survey.responses,
-              <Button key={survey.id} variant="ghost" size="sm">View</Button>,
-            ])}
+            columns={[
+              { key: "title", label: "Title" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "active" ? "success" : "default"}>{value}</Badge> },
+              { key: "responses", label: "Responses" },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">View</Button> },
+            ]}
+            data={surveys}
           />
         </Card>
       </div>

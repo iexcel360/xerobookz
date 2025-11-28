@@ -34,8 +34,8 @@ export default function ITTicketsPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,15 +51,15 @@ export default function ITTicketsPage() {
             <Button variant="primary">New Ticket</Button>
           </div>
           <Table
-            headers={["Ticket #", "Subject", "Category", "Status", "Priority", "Actions"]}
-            rows={tickets.map((ticket) => [
-              ticket.number,
-              ticket.subject,
-              ticket.category,
-              <Badge key={ticket.id} variant={ticket.status === "open" ? "warning" : "info"}>{ticket.status}</Badge>,
-              <Badge key={ticket.id} variant={ticket.priority === "high" ? "danger" : "secondary"}>{ticket.priority}</Badge>,
-              <Button key={ticket.id} variant="ghost" size="sm">View</Button>,
-            ])}
+            columns={[
+              { key: "number", label: "Ticket #" },
+              { key: "subject", label: "Subject" },
+              { key: "category", label: "Category" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "open" ? "warning" : "info"}>{value}</Badge> },
+              { key: "priority", label: "Priority", render: (value) => <Badge variant={value === "high" ? "danger" : "default"}>{value}</Badge> },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">View</Button> },
+            ]}
+            data={tickets}
           />
         </Card>
       </div>

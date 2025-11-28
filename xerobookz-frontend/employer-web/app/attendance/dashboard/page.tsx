@@ -36,8 +36,8 @@ export default function AttendanceDashboardPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -62,7 +62,7 @@ export default function AttendanceDashboardPage() {
               <p className="text-sm text-grey-600 mb-1">On Time</p>
               <p className="text-2xl font-bold text-secondary-700">{stats.onTime}</p>
             </div>
-            <IconBox icon="check-circle" size="md" variant="success" />
+            <IconBox icon="check-circle" size="md" variant="accent" />
           </div>
         </Card>
         <Card variant="floating" className="p-6">

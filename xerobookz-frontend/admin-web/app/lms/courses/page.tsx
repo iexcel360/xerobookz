@@ -34,8 +34,8 @@ export default function LMSCoursesPage() {
         onNavigate: (href) => (window.location.href = href),
       }}
       topNav={{
-        user,
-        tenant: currentTenant,
+        user: user || undefined,
+        tenant: currentTenant || undefined,
         onLogout: logout,
       }}
     >
@@ -51,14 +51,14 @@ export default function LMSCoursesPage() {
             <Button variant="primary">Create Course</Button>
           </div>
           <Table
-            headers={["Title", "Category", "Duration (min)", "Status", "Actions"]}
-            rows={courses.map((course) => [
-              course.title,
-              course.category,
-              course.duration,
-              <Badge key={course.id} variant={course.status === "published" ? "success" : "secondary"}>{course.status}</Badge>,
-              <Button key={course.id} variant="ghost" size="sm">Edit</Button>,
-            ])}
+            columns={[
+              { key: "title", label: "Title" },
+              { key: "category", label: "Category" },
+              { key: "duration", label: "Duration (min)" },
+              { key: "status", label: "Status", render: (value) => <Badge variant={value === "published" ? "success" : "default"}>{value}</Badge> },
+              { key: "actions", label: "Actions", render: () => <Button variant="ghost" size="sm">Edit</Button> },
+            ]}
+            data={courses}
           />
         </Card>
       </div>
