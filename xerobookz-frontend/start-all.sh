@@ -40,7 +40,7 @@ cd ..
 
 # Start admin-web
 echo ""
-echo "🌐 Starting Admin Web (port 3000)..."
+echo "🌐 Starting Admin Web (port 3010)..."
 cd admin-web
 if [ ! -d "node_modules" ]; then
     echo "  → Installing dependencies..."
@@ -54,14 +54,14 @@ if [ ! -f ".env.local" ]; then
 fi
 
 # Start in background
-npm run dev > ../admin-web.log 2>&1 &
+PORT=3010 npm run dev > ../admin-web.log 2>&1 &
 ADMIN_PID=$!
-echo "  → Admin Web started (PID: $ADMIN_PID)"
+echo "  → Admin Web started (PID: $ADMIN_PID) on port 3010"
 cd ..
 
 # Start employer-web
 echo ""
-echo "🌐 Starting Employer Web (port 3001)..."
+echo "🌐 Starting Employer Web (port 3011)..."
 cd employer-web
 if [ ! -d "node_modules" ]; then
     echo "  → Installing dependencies..."
@@ -75,14 +75,14 @@ if [ ! -f ".env.local" ]; then
 fi
 
 # Start in background
-PORT=3001 npm run dev > ../employer-web.log 2>&1 &
+PORT=3011 npm run dev > ../employer-web.log 2>&1 &
 EMPLOYER_PID=$!
-echo "  → Employer Web started (PID: $EMPLOYER_PID)"
+echo "  → Employer Web started (PID: $EMPLOYER_PID) on port 3011"
 cd ..
 
 # Start ess-web
 echo ""
-echo "🌐 Starting ESS Web (port 3002)..."
+echo "🌐 Starting ESS Web (port 3012)..."
 cd ess-web
 if [ ! -d "node_modules" ]; then
     echo "  → Installing dependencies..."
@@ -96,9 +96,9 @@ if [ ! -f ".env.local" ]; then
 fi
 
 # Start in background
-PORT=3002 npm run dev > ../ess-web.log 2>&1 &
+PORT=3012 npm run dev > ../ess-web.log 2>&1 &
 ESS_PID=$!
-echo "  → ESS Web started (PID: $ESS_PID)"
+echo "  → ESS Web started (PID: $ESS_PID) on port 3012"
 cd ..
 
 # Save PIDs
